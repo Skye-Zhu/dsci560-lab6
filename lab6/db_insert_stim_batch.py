@@ -151,7 +151,7 @@ def main():
     conn.commit()
     cur.close()
     conn.close()
-    print(f"Done ✅ upserted={ok}")
+    print(f"Done upserted={ok}")
 
 if __name__ == "__main__":
     main()
