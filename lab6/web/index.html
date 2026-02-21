@@ -1,0 +1,80 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Lab6 Oil Wells Map (Flask + Leaflet)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    body { margin: 0; font-family: system-ui, -apple-system, sans-serif; }
+    #map { height: 100vh; width: 100vw; }
+    .popup h3 { margin: 0 0 6px 0; font-size: 16px; }
+    .muted { color: #666; font-size: 12px; margin-bottom: 6px; }
+    .kv { margin: 2px 0; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([47.5, -102.5], 6);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+
+    function safe(v) {
+      if (v === null || v === undefined || v === "" || v === "N/A") return "N/A";
+      return String(v);
+    }
+
+    function popupHtml(r) {
+      const title = `${safe(r.well_name)} ${safe(r.well_number)}`.trim();
+      const link = (r.drillingedge_url && r.drillingedge_url !== "N/A")
+        ? `<div class="kv"><a href="${r.drillingedge_url}" target="_blank">DrillingEdge</a></div>`
+        : "";
+
+      return `
+        <div class="popup">
+          <h3>${title}</h3>
+          <div class="muted">Permit: ${safe(r.permit_no)} | API: ${safe(r.api)}</div>
+
+          <div class="kv"><b>County/State</b>: ${safe(r.county)}, ${safe(r.state)}</div>
+          <div class="kv"><b>Closest City</b>: ${safe(r.closest_city)}</div>
+          <div class="kv"><b>Status</b>: ${safe(r.well_status)} | <b>Type</b>: ${safe(r.well_type)}</div>
+          <div class="kv"><b>Oil</b>: ${safe(r.barrels_oil)} | <b>Gas</b>: ${safe(r.barrels_gas)}</div>
+          <div class="kv"><b>Lat/Lon</b>: ${safe(r.latitude)}, ${safe(r.longitude)}</div>
+          ${link}
+
+          <hr/>
+
+          <div class="kv"><b>Stimulation</b></div>
+          <div class="kv">Date: ${safe(r.stim_date)}</div>
+          <div class="kv">Type: ${safe(r.stim_treatment_type)}</div>
+          <div class="kv">Proppant(lbs): ${safe(r.stim_lbs_proppant)}</div>
+          <div class="kv">Max Pressure: ${safe(r.stim_max_pressure)}</div>
+          <div class="kv">Source Pages: ${safe(r.source_pages)}</div>
+        </div>
+      `;
+    }
+
+    fetch('/api/wells')
+      .then(r => r.json())
+      .then(rows => {
+        console.log("rows:", rows.length);
+        rows.forEach(r => {
+          const lat = parseFloat(r.latitude);
+          const lon = parseFloat(r.longitude);
+          if (Number.isNaN(lat) || Number.isNaN(lon)) return;
+          L.marker([lat, lon]).addTo(map).bindPopup(popupHtml(r), { maxWidth: 420 });
+        });
+      })
+      .catch(err => {
+        console.error(err);
+        alert("Failed to load /api/wells");
+      });
+  </script>
+</body>
+</html>
