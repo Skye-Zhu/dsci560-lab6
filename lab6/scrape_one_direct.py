@@ -18,18 +18,32 @@ def find_after(text, label):
     return clean(m.group(1)) if m else "N/A"
 
 def scrape_well_page(state_abbr, county_name, well_name, api):
-    state_slug = {
-        "ND": "north-dakota",
-    }.get(state_abbr.upper(), None)
-    if not state_slug:
-        raise ValueError("暂时只写了 ND，你的数据如果有别的州我再加映射")
+    """
+    直连 drillingedge well page（服务端渲染，requests 可抓）
+    state_abbr: 'ND'（目前你数据基本都是 ND）
+    county_name: e.g., 'McKenzie', 'Williams'
+    well_name: e.g., 'Basic Game And Fish 34-3'
+    api: '33-053-02102'
+    """
+    state_abbr = (state_abbr or "").upper().strip()
+    county_name = (county_name or "").strip()
+    well_name = (well_name or "").strip()
+    api = (api or "").strip()
 
+    # 目前你的数据集是 ND；如果不是 ND，就直接返回 None（不抛异常，batch 才不会炸）
+    if state_abbr != "ND":
+        return None, None
+
+    state_slug = "north-dakota"
     county_slug = slugify(county_name) + "-county"
     well_slug = slugify(well_name)
 
     url = f"https://www.drillingedge.com/{state_slug}/{county_slug}/wells/{well_slug}/{api}"
 
-    r = requests.get(url, timeout=30, headers={"User-Agent": "Mozilla/5.0"})
+    try:
+        r = requests.get(url, timeout=(15, 45), headers={"User-Agent": "Mozilla/5.0"})
+    except Exception:
+        return None, url
     if r.status_code != 200:
         return None, url
 
