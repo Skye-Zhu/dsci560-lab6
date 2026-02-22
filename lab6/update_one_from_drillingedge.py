@@ -1,6 +1,6 @@
 import re
 import mysql.connector
-from scrape_one_direct import scrape_well_page  # 复用你刚刚跑通的函数
+from scrape_one_direct import scrape_well_page 
 
 MYSQL_CONFIG = {
     "host": "localhost",
@@ -20,7 +20,7 @@ def split_latlon(latlon):
 def update_one(api, state, county, well_name):
     res, url = scrape_well_page(state, county, well_name, api)
     if not res:
-        print("Failed to fetch:", url)
+        print("Failed", url)
         return
 
     lat, lon = split_latlon(res.get("latitude_longitude", "N/A"))
@@ -55,7 +55,7 @@ def update_one(api, state, county, well_name):
     try:
         res, url = scrape_well_page(state, county, well_name, api)
     except Exception as e:
-        print("Fetch error:", api, e)
+        print("Fetch error", api, e)
         return
 
     print("Updated", api, lat, lon)
