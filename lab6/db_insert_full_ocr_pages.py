@@ -8,16 +8,13 @@ FULL_DIR = "full_output"
 MYSQL_CONFIG = {
     "host": "127.0.0.1",
     "user": "root",
-    "password": "00000000",   # 改成你的
+    "password": "00000000",   
     "database": "oilwells",
 }
 
 PAGE_RE = re.compile(r"^PAGE (\d+)(?: .*)?\s*$")
 
 def split_pages(full_text: str):
-    """
-    把 .full.txt 按 ===== PAGE X ===== 切分成 (page_no, text)
-    """
     pages = []
     cur_page = None
     buf = []
@@ -25,7 +22,6 @@ def split_pages(full_text: str):
     for line in full_text.splitlines(True):
         m = PAGE_RE.match(line.strip())
         if m:
-            # flush previous
             if cur_page is not None:
                 pages.append((cur_page, "".join(buf).strip()))
             cur_page = int(m.group(1))
@@ -56,7 +52,6 @@ def main():
     """
 
     total_pages = 0
-    # 先统计总页数给总进度条
     for fname in files:
         with open(os.path.join(FULL_DIR, fname), "r", encoding="utf-8", errors="ignore") as f:
             txt = f.read()
@@ -68,7 +63,6 @@ def main():
     for fname in files:
         m = re.search(r"W(\d{5})", fname)
         if not m:
-            # 跳过不符合命名的
             continue
         permit_no = m.group(1)
         pdf_name = f"W{permit_no}.pdf"
@@ -87,7 +81,7 @@ def main():
     pbar.close()
     cur.close()
     conn.close()
-    print(f"Done files={ok_files}, pages={total_pages}")
+    print(f"Done files{ok_files}, pages{total_pages}")
 
 if __name__ == "__main__":
     main()
