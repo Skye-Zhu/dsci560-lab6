@@ -8,7 +8,6 @@ MYSQL_CONFIG = {
     "database": "oilwells",
 }
 
-# 更宽松：小数坐标对（允许逗号/空格/多空白/中间有文字）
 PAIR_RE = re.compile(r'(-?\d{1,2}[.,]\d{3,})\s*[, ]\s*(-?\d{1,3}[.,]\d{3,})')
 
 LAT_RE = re.compile(r'Latitude\s*[:=]?\s*(-?\d{1,2}[.,]\d{3,})', re.IGNORECASE)
@@ -26,7 +25,6 @@ def find_latlon_in_text(text: str):
     if not text:
         return None
 
-    # 1) 先尝试同一行出现一对
     for m in PAIR_RE.finditer(text):
         lat = float(norm_num(m.group(1)))
         lon = float(norm_num(m.group(2)))
@@ -34,14 +32,11 @@ def find_latlon_in_text(text: str):
             return (norm_num(m.group(1)), norm_num(m.group(2)))
 
     lines = text.splitlines()
-
-    # 2) 尝试 "Latitude: xxx" 与 "Longitude: yyy" 拆行
     lat_val = None
     for i, ln in enumerate(lines):
         m = LAT_RE.search(ln) or LAT2_RE.search(ln)
         if m:
             lat_val = norm_num(m.group(1))
-            # 在后面几行找 lon
             for j in range(i, min(i + 6, len(lines))):
                 mm = LON_RE.search(lines[j]) or LON2_RE.search(lines[j])
                 if mm:
@@ -51,7 +46,6 @@ def find_latlon_in_text(text: str):
                     if is_plausible_nd(lat, lon):
                         return (lat_val, lon_val)
 
-    # 3) 兜底：在包含关键词的行里找 pair（有些写 Lat/Long: 48.xx -103.xx）
     for ln in lines:
         low = ln.lower()
         if "lat" in low or "lon" in low or "latitude" in low or "longitude" in low:
@@ -68,7 +62,6 @@ def main():
     conn = mysql.connector.connect(**MYSQL_CONFIG)
     cur = conn.cursor()
 
-    # 只找缺坐标的
     cur.execute("""
         SELECT permit_no
         FROM wells
@@ -113,7 +106,7 @@ def main():
             WHERE permit_no=%s
         """, (lat, lon, permit_no))
         updated += 1
-        print(f"✔ {permit_no} -> {lat}, {lon} (page {page_no})")
+        print(f" {permit_no} -> {lat}, {lon} (page {page_no})")
 
     conn.commit()
     cur.close()
