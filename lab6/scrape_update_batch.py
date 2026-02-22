@@ -20,9 +20,8 @@ SESSION.mount("http://", HTTPAdapter(max_retries=retries))
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
-from scrape_one_direct import scrape_well_page  # 你已经有这个文件/函数
+from scrape_one_direct import scrape_well_page  
 
-# 建议：直接复制你 db_insert_batch.py 里成功的 MYSQL_CONFIG
 MYSQL_CONFIG = {
     "host": "localhost",
     "user": "root",
@@ -30,15 +29,11 @@ MYSQL_CONFIG = {
     "database": "oilwells",
 }
 
-SLEEP_SEC = 1.2          # 每条之间休息，防止被网站限流
-MAX_ROWS = None          # 想只跑前 N 条就填数字，比如 20；不限制就 None
+SLEEP_SEC = 1.2          
+MAX_ROWS = None          
 
 
 def split_latlon(latlon: str):
-    """
-    输入: "48.097836, -103.645192"
-    输出: ("48.097836", "-103.645192")
-    """
     if not latlon or latlon == "N/A":
         return "N/A", "N/A"
     m = re.search(r"(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)", latlon)
@@ -48,13 +43,7 @@ def split_latlon(latlon: str):
 
 
 def fetch_targets(cur):
-    """
-    只抓需要补全的记录：
-    - api 有值
-    - 且 (latitude 为空 / N/A) 或者 drillingedge_url 为空
-    注意：目前 well_name 你还没从 PDF 解析出来，所以这里先用一个兜底 well_name。
-    后面你把 well_name 入库后，这里就自动更准。
-    """
+
     sql = """
     SELECT id, api, state, county, COALESCE(well_name, '') AS well_name
     FROM wells
@@ -112,9 +101,7 @@ def main():
     ok, fail, skip = 0, 0, 0
 
     for idx, (row_id, api, state, county, well_name) in enumerate(rows, start=1):
-        # 你现在还没稳定入库 well_name，这里先用一个兜底：
-        # drillingedge 直连 URL 需要 well_name slug，所以我们需要一个策略：
-        # 方案：如果 well_name 为空，先跳过（等你把 well_name 解析入库后再批量跑）
+  
         if not well_name.strip():
             print(f"[{idx}/{total}] SKIP api={api} (well_name missing)")
             skip += 1
@@ -126,11 +113,9 @@ def main():
             res, url = scrape_well_page(state, county, well_name, api)
 
             if not res:
-                # fallback：selenium 搜索 API 拿真实 well url
                 real_url = find_well_url_by_api(api, headless=True, timeout=25)
                 if not real_url:
                     print("no page, fallback failed")
-                    # 标记已尝试，避免下次重复抓
                     cur.execute("""
                     UPDATE wells
                     SET drillingedge_url = 'N/A',
@@ -146,11 +131,10 @@ def main():
                     time.sleep(SLEEP_SEC)
                     continue
 
-                # 用 requests 抓真实页面并解析（沿用你之前的“find_after”文本抽取逻辑）
                 try:
                     r = SESSION.get(real_url, timeout=(20, 90), headers=HEADERS)
                 except Exception as e:
-                    print(f"✗ (fallback request failed: {e})")
+                    print(f" fallback request failed {e}")
                     fail += 1
                     time.sleep(SLEEP_SEC)
                     continue
@@ -174,17 +158,17 @@ def main():
                 }
                 url = real_url
 
-                print("✓ (fallback)")
+                print(" fallback")
     
 
             update_row(cur, api, res, url)
             conn.commit()
 
-            print("✓")
+            print("Done")
             ok += 1
 
         except Exception as e:
-            print(f"✗ ERROR: {e}")
+            print(f"ERROR, {e}")
             fail += 1
 
         time.sleep(SLEEP_SEC)
@@ -192,7 +176,7 @@ def main():
     cur.close()
     conn.close()
 
-    print(f"Done ok={ok}, skip={skip}, fail={fail}")
+    print(f"Done ok{ok}, skip{skip}, fail{fail}")
 
 
 if __name__ == "__main__":
