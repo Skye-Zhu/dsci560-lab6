@@ -23,7 +23,7 @@ def main():
     for fname in files:
         path = os.path.join(OUTPUT_DIR, fname)
 
-        # permit_no 直接从文件名解析（最稳）
+
         m = re.search(r"W(\d{5})\.pdf\.txt$", fname)
         if not m:
             continue
@@ -55,7 +55,7 @@ def main():
     cur.close()
     conn.close()
 
-    print(f"Done updated={updated}")
+    print(f"Done {updated}")
 
 if __name__ == "__main__":
     main()
