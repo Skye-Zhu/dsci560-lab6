@@ -7,7 +7,7 @@ FULL_DIR = "full_output"
 MYSQL_CONFIG = {
     "host": "127.0.0.1",
     "user": "root",
-    "password": "00000000",   # 改成你的
+    "password": "00000000",   
     "database": "oilwells",
 }
 
@@ -72,7 +72,6 @@ def main():
         if not stim:
             continue
 
-        # 查 api
         cur.execute("SELECT api FROM wells WHERE permit_no=%s", (permit_no,))
         row = cur.fetchone()
         if not row:
@@ -104,7 +103,7 @@ def main():
     cur.close()
     conn.close()
 
-    print("Full parse done, updated:", inserted)
+    print("done", inserted)
 
 if __name__ == "__main__":
     main()
