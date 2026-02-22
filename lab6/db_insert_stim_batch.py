@@ -21,7 +21,6 @@ def first_match(patterns, text, flags=re.IGNORECASE):
     return "N/A"
 
 def parse_stim(text):
-    # 这是一版“够交作业 + 可持续迭代”的 best-effort parser
     stim_date = first_match([
         r"\b(\d{1,2}/\d{1,2}/\d{2,4})\b",
         r"\b([A-Za-z]{3,9}\s+\d{1,2},\s+\d{4})\b",
@@ -102,7 +101,6 @@ def main():
             continue
         permit_no = permit_m.group(1)
 
-        # 从 wells 表拿 api
         cur.execute("SELECT api FROM wells WHERE permit_no=%s", (permit_no,))
         row = cur.fetchone()
         api = row[0] if row and row[0] else "N/A"
@@ -114,7 +112,7 @@ def main():
 
         src_pdf = fname.replace(".stim.txt", ".pdf")
         pages = pages_map.get(src_pdf, [])
-        src_pages = ",".join(map(str, pages[:50]))  # 防止太长
+        src_pages = ",".join(map(str, pages[:50])) 
 
         sql = """
         INSERT INTO stimulation
@@ -151,7 +149,7 @@ def main():
     conn.commit()
     cur.close()
     conn.close()
-    print(f"Done upserted={ok}")
+    print(f"Done upserted{ok}")
 
 if __name__ == "__main__":
     main()
