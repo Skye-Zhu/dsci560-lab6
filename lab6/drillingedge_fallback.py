@@ -8,10 +8,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
 def find_well_url_by_api(api: str, headless: bool = True, timeout: int = 20):
-    """
-    用 Selenium 打开 drillingedge 搜索页，找到 href 里包含 api 的第一个链接。
-    成功返回完整 well page url；失败返回 None
-    """
+  
     api = api.strip()
     url = f"https://www.drillingedge.com/search?q={api}"
 
@@ -29,7 +26,6 @@ def find_well_url_by_api(api: str, headless: bool = True, timeout: int = 20):
     try:
         driver.get(url)
 
-        # 等待页面渲染出至少一个包含 api 的链接
         wait = WebDriverWait(driver, timeout)
         wait.until(
             EC.presence_of_element_located(
@@ -43,7 +39,6 @@ def find_well_url_by_api(api: str, headless: bool = True, timeout: int = 20):
             if api in href and "/wells/" in href:
                 return href
 
-        # 兜底：返回第一个包含 api 的 href
         if links:
             return links[0].get_attribute("href")
 
@@ -55,7 +50,7 @@ def find_well_url_by_api(api: str, headless: bool = True, timeout: int = 20):
     finally:
         driver.quit()'''
 
-# drillingedge_fallback.py
+
 import requests
 from bs4 import BeautifulSoup
 
@@ -63,10 +58,6 @@ BASE = "https://www.drillingedge.com"
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
 def find_well_url_by_api(api: str, timeout: int = 20) -> str | None:
-    """
-    通过 drillingedge 搜索页：/search?q=<API>
-    找到包含 /wells/ 且 href 里包含 api 的链接，返回第一个匹配的 well page URL
-    """
     search_url = f"{BASE}/search?q={api}"
     r = requests.get(search_url, headers=HEADERS, timeout=timeout)
     if r.status_code != 200:
@@ -74,7 +65,6 @@ def find_well_url_by_api(api: str, timeout: int = 20) -> str | None:
 
     soup = BeautifulSoup(r.text, "html.parser")
 
-    # 最稳：找 href 同时满足 "/wells/" + api
     for a in soup.select("a[href]"):
         href = a.get("href", "")
         if "/wells/" in href and api in href:
