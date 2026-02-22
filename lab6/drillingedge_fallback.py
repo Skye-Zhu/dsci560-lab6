@@ -1,4 +1,4 @@
-import time
+'''import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
@@ -53,4 +53,33 @@ def find_well_url_by_api(api: str, headless: bool = True, timeout: int = 20):
         return None
 
     finally:
-        driver.quit()
+        driver.quit()'''
+
+# drillingedge_fallback.py
+import requests
+from bs4 import BeautifulSoup
+
+BASE = "https://www.drillingedge.com"
+HEADERS = {"User-Agent": "Mozilla/5.0"}
+
+def find_well_url_by_api(api: str, timeout: int = 20) -> str | None:
+    """
+    通过 drillingedge 搜索页：/search?q=<API>
+    找到包含 /wells/ 且 href 里包含 api 的链接，返回第一个匹配的 well page URL
+    """
+    search_url = f"{BASE}/search?q={api}"
+    r = requests.get(search_url, headers=HEADERS, timeout=timeout)
+    if r.status_code != 200:
+        return None
+
+    soup = BeautifulSoup(r.text, "html.parser")
+
+    # 最稳：找 href 同时满足 "/wells/" + api
+    for a in soup.select("a[href]"):
+        href = a.get("href", "")
+        if "/wells/" in href and api in href:
+            if href.startswith("http"):
+                return href
+            return BASE + href
+
+    return None

@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, send_from_directory
 import mysql.connector
+from flask import request
 
 app = Flask(__name__, static_folder="web")
 
@@ -38,6 +39,32 @@ def api_wells():
     """
 
     cur.execute(sql)
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+    return jsonify(rows)
+
+@app.get("/api/ocr_search")
+def api_ocr_search():
+    permit_no = request.args.get("permit_no", "").strip()
+    q = request.args.get("q", "").strip()
+
+    if not permit_no or not q:
+        return jsonify({"error": "need permit_no and q"}), 400
+
+    conn = mysql.connector.connect(**MYSQL_CONFIG)
+    cur = conn.cursor(dictionary=True)
+
+    sql = """
+    SELECT permit_no, page_no,
+           LEFT(ocr_text, 800) AS snippet
+    FROM ocr_full_pages
+    WHERE permit_no=%s AND ocr_text LIKE %s
+    ORDER BY page_no ASC
+    LIMIT 20
+    """
+    cur.execute(sql, (permit_no, f"%{q}%"))
     rows = cur.fetchall()
 
     cur.close()

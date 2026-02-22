@@ -7,7 +7,7 @@ PDF_DIR = "pdfs"
 OUT_DIR = "output"
 
 def ocr_pdf(pdf_path):
-    pages = convert_from_path(pdf_path, dpi=300)
+    pages = convert_from_path(pdf_path, dpi=300, first_page=1, last_page=8)
     texts = []
     for i, page in enumerate(pages, start=1):
         text = pytesseract.image_to_string(page)
