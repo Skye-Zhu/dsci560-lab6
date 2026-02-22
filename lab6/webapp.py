@@ -7,7 +7,7 @@ app = Flask(__name__, static_folder="web")
 MYSQL_CONFIG = {
     "host": "127.0.0.1",
     "user": "root",
-    "password": "00000000",   # 改成你的
+    "password": "00000000",   
     "database": "oilwells",
 }
 
@@ -20,7 +20,6 @@ def api_wells():
     conn = mysql.connector.connect(**MYSQL_CONFIG)
     cur = conn.cursor(dictionary=True)
 
-    # 只返回有 lat/lon 的记录（排除 N/A）
     sql = """
     SELECT
       w.permit_no, w.api, w.well_name, w.well_number,
@@ -76,5 +75,4 @@ def static_files(path):
     return send_from_directory(app.static_folder, path)
 
 if __name__ == "__main__":
-    # 0.0.0.0 方便你未来用别的机器访问；本地用也没问题
     app.run(host="127.0.0.1", port=5000, debug=True)
