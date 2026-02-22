@@ -12,7 +12,6 @@ def clean(s):
     return re.sub(r"\s+", " ", s).strip()
 
 def find_value_by_label(page_text, label):
-    # 从整页 text 里用“label + 下一行”方式抓值（抗 HTML 变化）
     m = re.search(rf"{label}\s*\n\s*([^\n]+)", page_text, re.IGNORECASE)
     return clean(m.group(1)) if m else "N/A"
 
@@ -31,9 +30,7 @@ def scrape(api):
 
     try:
         driver.get(url)
-        time.sleep(3)  # 等 JS 把结果渲染出来
-
-        # 找搜索结果中包含 "Well Summary" 或 /well/ /wells/ 具体详情页的链接
+        time.sleep(3)  
         links = driver.find_elements(By.TAG_NAME, "a")
         target = None
         for a in links:
@@ -43,7 +40,6 @@ def scrape(api):
                 break
 
         if not target:
-            # 兜底：把页面保存下来你也能肉眼看
             with open("debug_search_rendered.txt", "w", encoding="utf-8") as f:
                 f.write(driver.page_source)
             return None
