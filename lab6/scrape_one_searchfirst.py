@@ -17,10 +17,8 @@ def find_well_url_by_api(api: str, timeout=20):
         if api in href and "/wells/" in href:
             links.append(href)
 
-    # 归一化成绝对 URL
     links = [href if href.startswith("http") else BASE + href for href in links]
 
-    # 去重
     seen = set()
     uniq = []
     for u in links:
@@ -30,17 +28,12 @@ def find_well_url_by_api(api: str, timeout=20):
     return uniq[0] if uniq else None
 
 def parse_well_fields(html: str):
-    # 你可以继续沿用你 scrape_one_direct.py 的解析方式
-    # 这里给一个最小版本：抓 Lat/Lon（页面通常有 “Latitude / Longitude” 或坐标串）
     res = {"latitude_longitude": "N/A", "well_status": "N/A", "well_type": "N/A", "closest_city": "N/A",
            "barrels_oil": "N/A", "barrels_gas": "N/A"}
 
-    # 常见坐标格式：48.097836, -103.645192
     m = re.search(r"(-?\d{2}\.\d+)\s*,\s*(-?\d{2,3}\.\d+)", html)
     if m:
         res["latitude_longitude"] = f"{m.group(1)}, {m.group(2)}"
-
-    # status/type/city 你可以把你原来 direct 版本的 regex/selector 搬过来
     return res
 
 def scrape_by_api(api: str, timeout=20):
