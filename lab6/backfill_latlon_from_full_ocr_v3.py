@@ -8,13 +8,9 @@ MYSQL_CONFIG = {
     "database": "oilwells",
 }
 
-# 1) Decimal pair (宽松)
 DEC_PAIR = re.compile(r'(-?\d{1,2}[.,]\d{3,})\s*[, ]\s*(-?\d{1,3}[.,]\d{3,})')
-
-# 2) DMS patterns: 48°05'52.3" N 103°39'12.1" W  或  48 05 52.3 N 103 39 12.1 W
 DMS_LAT = re.compile(r'(\d{1,2})\D+(\d{1,2})\D+(\d{1,2}(?:[.,]\d+)?)\s*([NS])', re.IGNORECASE)
 DMS_LON = re.compile(r'(\d{1,3})\D+(\d{1,2})\D+(\d{1,2}(?:[.,]\d+)?)\s*([EW])', re.IGNORECASE)
-
 LAT_KEY = re.compile(r'\b(Lat|Latitude)\b', re.IGNORECASE)
 LON_KEY = re.compile(r'\b(Lon|Longitude)\b', re.IGNORECASE)
 
@@ -36,7 +32,6 @@ def find_latlon(text: str):
     if not text:
         return None
 
-    # A) decimal pair anywhere
     for m in DEC_PAIR.finditer(text):
         lat = norm_num(m.group(1))
         lon = norm_num(m.group(2))
@@ -44,19 +39,15 @@ def find_latlon(text: str):
             return (f"{lat}", f"{lon}")
 
     lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
-
-    # B) join nearby lines (解决拆行/表格断裂)
     for i in range(len(lines)):
-        window = " | ".join(lines[i:i+4])  # 4 行拼一起更稳
+        window = " | ".join(lines[i:i+4])  
 
-        # B1) decimal in window
         m = DEC_PAIR.search(window)
         if m:
             lat = norm_num(m.group(1)); lon = norm_num(m.group(2))
             if plausible_nd(lat, lon):
                 return (f"{lat}", f"{lon}")
 
-        # B2) DMS in window
         ml = DMS_LAT.search(window)
         mn = DMS_LON.search(window)
         if ml and mn:
@@ -84,7 +75,6 @@ def main():
 
     updated = 0
     for permit_no in permits:
-        # 捞更多页：既看 Lat/Lon，也看 N/W/°（DMS 特征）
         cur.execute("""
             SELECT page_no, ocr_text
             FROM ocr_full_pages
@@ -118,7 +108,7 @@ def main():
             WHERE permit_no=%s
         """, (lat, lon, permit_no))
         updated += 1
-        print(f"✔ {permit_no} -> {lat}, {lon} (page {hit_page})")
+        print(f" {permit_no} -> {lat}, {lon} (page {hit_page})")
 
     conn.commit()
     cur.close()
