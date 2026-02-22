@@ -19,13 +19,11 @@ def scrape_drillingedge(api):
     print("SEARCH status:", r.status_code)
     print("SEARCH final url:", r.url)
 
-    # 保存 HTML 方便我们看是不是被拦/空壳
     with open("debug_search.html", "w", encoding="utf-8") as f:
         f.write(r.text)
 
     soup = BeautifulSoup(r.text, "html.parser")
 
-    # 尽可能宽松地找候选链接
     links = []
     for a in soup.find_all("a", href=True):
         href = a["href"]
@@ -36,11 +34,9 @@ def scrape_drillingedge(api):
     if links:
         print("First 10 links:", links[:10])
 
-    # 更宽的匹配：/wells/ 或 /well/ 或 well-details 等
     target = None
     for href in links:
         if "/wells/" in href or "/well/" in href or "well" in href.lower():
-            # 排除 javascript: 之类
             if href.startswith("http"):
                 target = href
             else:
