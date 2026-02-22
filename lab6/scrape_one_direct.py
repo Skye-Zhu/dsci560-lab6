@@ -18,19 +18,12 @@ def find_after(text, label):
     return clean(m.group(1)) if m else "N/A"
 
 def scrape_well_page(state_abbr, county_name, well_name, api):
-    """
-    直连 drillingedge well page（服务端渲染，requests 可抓）
-    state_abbr: 'ND'（目前你数据基本都是 ND）
-    county_name: e.g., 'McKenzie', 'Williams'
-    well_name: e.g., 'Basic Game And Fish 34-3'
-    api: '33-053-02102'
-    """
+
     state_abbr = (state_abbr or "").upper().strip()
     county_name = (county_name or "").strip()
     well_name = (well_name or "").strip()
     api = (api or "").strip()
 
-    # 目前你的数据集是 ND；如果不是 ND，就直接返回 None（不抛异常，batch 才不会炸）
     if state_abbr != "ND":
         return None, None
 
@@ -62,7 +55,6 @@ def scrape_well_page(state_abbr, county_name, well_name, api):
     return result, url
 
 if __name__ == "__main__":
-    # 先用你这条已知 case 测通（这个 well name 可以从 drillingedge 页面看到）
     state = "ND"
     county = "McKenzie"
     well_name = "Basic Game And Fish 34-3"
