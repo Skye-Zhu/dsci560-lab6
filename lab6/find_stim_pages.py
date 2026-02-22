@@ -1,8 +1,8 @@
 import os
 import re
-import fitz  # PyMuPDF
+import fitz  
 
-PDF_DIR = "pdfs"  # 你说你的 PDF 在 lab6/pdfs
+PDF_DIR = "pdfs"  
 KEYWORDS = [
     "stimulation", "frac", "fractur", "treatment",
     "proppant", "acid", "shooting", "stages",
@@ -22,7 +22,7 @@ def find_pages(pdf_path, max_pages=300):
                 txt = doc.load_page(i).get_text("text")
                 low = txt.lower()
                 if any(k in low for k in KEYWORDS):
-                    hits.append(i + 1)  # 页号用 1-index 更直观
+                    hits.append(i + 1)  
         doc.close()
         return hits
 
