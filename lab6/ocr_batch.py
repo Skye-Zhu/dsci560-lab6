@@ -47,11 +47,11 @@ def main():
                 f.write(text)
 
             t1 = time.time()
-            print(f"✓ ({t1 - t0:.1f}s)")
+            print(f" ({t1 - t0:.1f}s)")
             done += 1
 
         except Exception as e:
-            print(f"✗ ERROR: {e}")
+            print(f" ERROR: {e}")
             failed += 1
 
     total_time = time.time() - start_all
