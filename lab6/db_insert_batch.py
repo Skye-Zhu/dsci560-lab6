@@ -43,7 +43,7 @@ def main():
 
     for fname in txt_files:
         path = os.path.join(OUTPUT_DIR, fname)
-        source_pdf = fname.replace(".txt", "")  # W11745.pdf
+        source_pdf = fname.replace(".txt", "")  
 
         try:
             with open(path, "r", encoding="utf-8") as f:
@@ -55,7 +55,7 @@ def main():
             if m:
                 data["permit_no"] = m.group(1)
 
-            # permit_no 是核心主键，抓不到就跳过
+        
             if data.get("permit_no", "N/A") == "N/A":
                 print(f"[SKIP] {fname} (no permit_no)")
                 fail += 1
