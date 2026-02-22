@@ -7,12 +7,10 @@ import pytesseract
 PDF_DIR = "pdfs"
 OUT_DIR = "full_output"
 
-DPI = 200          # 全量建议 200，快很多；你要更清晰可改 250
-SLEEP_SEC = 0.0    # 想降温/防止风扇狂转可以设 0.05
-MAX_PAGES = None   # 想限制只跑前 N 页就填数字，比如 120；全量就 None
-
+DPI = 200          
+SLEEP_SEC = 0.0    
+MAX_PAGES = None   
 def count_pages_fast(pdf_path: str) -> int:
-    # 用 PyMuPDF 快速数页（比 pdf2image 快很多）
     import fitz
     doc = fitz.open(pdf_path)
     n = len(doc)
@@ -20,10 +18,6 @@ def count_pages_fast(pdf_path: str) -> int:
     return n
 
 def read_done_pages(done_path: str) -> set[int]:
-    """
-    我们在输出里写一行：===== PAGE X =====
-    用它来判断已完成哪些页（断点续跑）
-    """
     done = set()
     if not os.path.exists(done_path):
         return done
@@ -31,7 +25,6 @@ def read_done_pages(done_path: str) -> set[int]:
         with open(done_path, "r", encoding="utf-8", errors="ignore") as f:
             for line in f:
                 if line.startswith("PAGE "):
-                    # 形如 ===== PAGE 12 =====
                     parts = line.strip().split()
                     if len(parts) >= 3 and parts[2].isdigit():
                         done.add(int(parts[2]))
@@ -47,7 +40,6 @@ def main():
         print(f"No PDFs found in {PDF_DIR}")
         return
 
-    # 先统计总页数（用于总进度条）
     total_pages = 0
     pdf_page_counts = {}
     for f in pdfs:
@@ -77,7 +69,6 @@ def main():
 
         done_pages = read_done_pages(out_path)
 
-        # 如果全做完了，直接跳过并推进进度条
         if len(done_pages) >= n_pages:
             pbar.update(n_pages)
             continue
@@ -88,7 +79,6 @@ def main():
                 continue
 
             try:
-                # 只转这一页
                 imgs = convert_from_path(
                     pdf_path,
                     dpi=DPI,
@@ -112,7 +102,7 @@ def main():
                 time.sleep(SLEEP_SEC)
 
     pbar.close()
-    print("Done Full OCR finished")
+    print(" finished")
 
 if __name__ == "__main__":
     main()
