@@ -14,8 +14,7 @@ MYSQL_CONFIG = {
 }
 
 SLEEP_SEC = 1.0
-MAX_ROWS = None  # 想先试 10 条就填 10
-
+MAX_ROWS = None  
 BASE = "https://www.drillingedge.com"
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
@@ -43,7 +42,6 @@ def is_numeric_coord(s: str) -> bool:
     return bool(re.fullmatch(r"-?\d+(?:\.\d+)?", s))
 
 def fetch_targets(cur):
-    # 只要 api 有，就尝试补 lat/lon（不管 county/state）
     sql = """
     SELECT id, api
     FROM wells
@@ -61,7 +59,6 @@ def fetch_targets(cur):
     return cur.fetchall()
 
 def find_well_url_by_api(api: str, verify_top_n: int = 10):
-    # 1) 搜索页
     search_url = f"{BASE}/search?q={api}"
     r = SESSION.get(search_url, headers=HEADERS, timeout=(15, 60))
     if r.status_code != 200:
@@ -69,7 +66,6 @@ def find_well_url_by_api(api: str, verify_top_n: int = 10):
 
     soup = BeautifulSoup(r.text, "html.parser")
 
-    # 2) 收集所有 /wells/ 链接（不要求 href 含 api）
     cand = []
     for a in soup.select("a[href]"):
         href = a.get("href", "")
@@ -84,10 +80,9 @@ def find_well_url_by_api(api: str, verify_top_n: int = 10):
     if not cand:
         return None
 
-    # 越长越具体，排前面
     cand.sort(key=len, reverse=True)
 
-    # 3) 打开候选 wells 页面，验证页面内容包含 API
+
     api_plain = api.replace("-", "")
     for u in cand[:verify_top_n]:
         try:
@@ -158,7 +153,7 @@ def main():
         rows = rows[:MAX_ROWS]
 
     total = len(rows)
-    print(f"Targets to scrape (API-only): {total}")
+    print(f"Targets to scrape  {total}")
 
     ok = fail = 0
 
@@ -168,8 +163,7 @@ def main():
 
             url = find_well_url_by_api(api)
             if not url:
-                print("✗ (no wells url)")
-                # 标记一下避免反复（你要是想反复尝试，就注释掉这段）
+                print(" no wells url")
                 cur.execute("UPDATE wells SET drillingedge_url='N/A' WHERE id=%s", (row_id,))
                 conn.commit()
                 fail += 1
@@ -178,7 +172,7 @@ def main():
 
             res = parse_well_page(url)
             if not res:
-                print("✗ (page parse fail)")
+                print(" page parse fail")
                 fail += 1
                 time.sleep(SLEEP_SEC)
                 continue
@@ -186,20 +180,19 @@ def main():
             update_row(cur, row_id, res)
             conn.commit()
 
-            # 检查是否真的拿到数字坐标
             lat_ok = is_numeric_coord(str(res.get("latitude_longitude","")).split(",")[0]) if res.get("latitude_longitude") else False
-            print("✓")
+            print("Done")
             ok += 1
 
         except Exception as e:
-            print(f"✗ ERROR: {e}")
+            print(f" ERROR,{e}")
             fail += 1
 
         time.sleep(SLEEP_SEC)
 
     cur.close()
     conn.close()
-    print(f"Done ok={ok}, fail={fail}")
+    print(f"Done ok{ok}, fail{fail}")
 
 if __name__ == "__main__":
     main()
